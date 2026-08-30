@@ -1,16 +1,22 @@
-from django.shortcuts import render
-
 from django.http import JsonResponse
+from django.http import HttpResponse
+from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 from langchain_groq import ChatGroq
+from elevenlabs.client import ElevenLabs
 import json
 
-#view = controller class
+eleven_client = ElevenLabs()
 
 llm = ChatGroq(model="openai/gpt-oss-20b")
 
+conversation_log = []
+
 def home(request):
-	return render(request, "chat/index.html")
+    return render(request, "chat/index.html")
+
+def gp_view(request):
+    return render(request, "chat/gp.html", {"log": conversation_log})
 
 @csrf_exempt
 def ask(request):
@@ -34,3 +40,14 @@ def ask(request):
     conversation_log.append({"question": question, "answer": answer})
 
     return JsonResponse({"answer": answer})
+
+@csrf_exempt
+def speak(request):
+    text = json.loads(request.body)["text"]
+    audio = eleven_client.text_to_speech.convert(
+        voice_id="rYDhrwHnXppgdRdM6xrv",  # old voice idk
+        model_id="eleven_turbo_v2",
+        text=text,
+    )
+    audio_bytes = b"".join(audio)
+    return HttpResponse(audio_bytes, content_type="audio/mpeg")

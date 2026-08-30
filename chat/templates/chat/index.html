@@ -63,8 +63,14 @@
       const data = await res.json();
       document.getElementById("answer").innerText = data.answer;
 
-      const utterance = new SpeechSynthesisUtterance(data.answer);
-      speechSynthesis.speak(utterance);
+      const speakRes = await fetch("/speak/", {
+        method: "POST",
+        body: JSON.stringify({text: data.answer})
+      });
+      const audioBlob = await speakRes.blob();
+      const audioUrl = URL.createObjectURL(audioBlob);
+      const audio = new Audio(audioUrl);
+      audio.play();
     };
 
     recognition.onend = stopVisualizer;
